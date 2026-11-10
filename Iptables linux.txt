@@ -1,0 +1,5 @@
+Langkah 7. Aktifkan NAT di Ubuntu
+
+-iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+
+-iptables -t nat -L -n -v
