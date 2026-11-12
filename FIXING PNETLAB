@@ -1,0 +1,53 @@
+====================fix intel VT-x vmware====================================
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "EnableVirtualizationBasedSecurity" /t REG_DWORD /d 0 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "RequirePlatformSecurityFeatures" /t REG_DWORD /d 0 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard" /v "Locked" /t REG_DWORD /d 0 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity" /v "Enabled" /t REG_DWORD /d 0 /f
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\WindowsHello" /v "Enabled" /t REG_DWORD /d 0 /f
+
+
+====================template mikrotik pnet===================================
+ip dhcp-client add interface=ether1 disabled=no
+ip dhcp-client print
+ip address add address=192.168.3.1/24 interface=ether2
+ip pool add name=pool-lan ranges=192.168.3.10-192.168.3.100
+ip dhcp-server add name=dhcp-lan interface=ether2 address-pool=pool-lan disabled=no
+ip dhcp-server network add address=192.168.3.0/24 gateway=192.168.3.1 dns-server=8.8.8.8,1.1.1.1
+ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+ip firewall nat print
+
+
+====================enable tty telnet ubuntu pnet via putty eve-ng===========
+systemctl enable --now serial-getty@ttyS0.service
+
+
+====================fix interface mikrotik after reboot pnet=================
+interface/set 0 name=ether1
+interface/set 1 name=ether2
+ip add/set 0 interface=ether2
+ip dhcp-client/set 0 interface=ether1
+ip dhcp-server/set 0 interface=ether2
+ip firewall nat/set 0 out-interface=ether1
+interface/print
+ip add/print
+ip dhcp-client/print
+ip dhcp-server/print
+ip firewall nat/print
+
+
+============================01-netcfg.yaml===================================
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens3:
+      dhcp4: yes
+    ens4:
+      dhcp4: no
+      addresses:
+        - 192.168.30.1/24
+      routes:
+        - to: default
+          via: 192.168.3.1
+      nameservers:
+        addresses: [8.8.8.8, 1.1.1.1]
